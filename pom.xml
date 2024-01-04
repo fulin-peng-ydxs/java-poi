@@ -65,6 +65,14 @@
             <artifactId>log4j-to-slf4j</artifactId>
             <version>${log4j-2-slf4j.version}</version>
         </dependency>
+
+        <!--单元测试-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit-version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
