@@ -525,7 +525,7 @@ public class ExcelUtils {
      * 2024/1/4 22:42
      * @author pengshuaifeng
      */
-    public static Map<String,String> getHeaders(Class<?> source,Map<String,String> headers,Set<String> selectedFields,Set<String> ignoreFields) throws Exception{
+    public static Map<String,String> getHeaders(Class<?> source,Map<String,String> headers,Collection<String> selectedFields,Collection<String> ignoreFields) throws Exception{
         if (headers!=null) {
             return headers;
         }
@@ -541,7 +541,7 @@ public class ExcelUtils {
      * 2024/1/6 19:12
      * @author pengshuaifeng
      */
-    public static Map<String,String> generateHeaders(Class<?> source,Set<String> selectedFields,Set<String> ignoreFields) throws Exception{
+    public static Map<String,String> generateHeaders(Class<?> source,Collection<String> selectedFields,Collection<String> ignoreFields) throws Exception{
         Map<String, String> headers = new HashMap<>();
         if(selectedFields!=null){
             for (String fieldName : selectedFields) {
