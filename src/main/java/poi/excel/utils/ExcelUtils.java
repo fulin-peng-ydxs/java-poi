@@ -39,6 +39,9 @@ public class ExcelUtils {
     /**
      * 读取excel
      * <p>表头默认为第一行,从第二行第一列开始读取</p>
+     * @param in excel输入流
+     * @param targetType 读取实体对象
+     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
@@ -64,9 +67,14 @@ public class ExcelUtils {
     /**
      * 读取excel
      * <p>表头默认为第一行,从第二行第一列开始读取</p>
+     * @param in excel输入流
+     * @param targetType 读取实体对象
+     * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
+     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
+    //TODO 表头映射应该和sheet一一绑定而不是共享表头
     public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers) throws Exception {
         return read(in, targetType, sheetNames, headers, 0, 1);
     }
