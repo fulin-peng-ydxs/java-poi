@@ -22,13 +22,12 @@ public class ExcelUtilsTest {
                     User.class, null);
             System.out.println(users);
             System.out.println("-------------------------");
-            Map<Integer, String> headers = new HashMap<>();
-            headers.put(0,"name");
-            headers.put(1,"address");
-            headers.put(2,"age");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("用户名","name");
+            headers.put("地址","address");
+            headers.put("年龄","age");
             System.out.println(users);
-            users = ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_quick.xls"),
-                    User.class, headers);
+            users = ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_read.xls"), User.class, headers);
             System.out.println(users);
         } catch (Exception e) {
             e.printStackTrace();

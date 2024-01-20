@@ -27,14 +27,13 @@ public class ExcelUtils {
      * <p>表头默认为第一行</p>
      * @param in excel输入流
      * @param targetType 读取实体对象
-     * @param headers 工作表表头索引映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
      * @param startReadRowAt 读取表开始行索引
-     * @param startReadColAt 读取表开始列索引
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Collection<T>> read(InputStream in, Class<T> targetType, Map<Integer,String> headers, int startReadRowAt, int startReadColAt) throws Exception {
-        return read(in, targetType, null, headers, 0, startReadRowAt, startReadColAt);
+    public static <T> Map<String,Collection<T>> read(InputStream in, Class<T> targetType, Map<String,String> headers, int startReadRowAt) throws Exception {
+        return read(in, targetType, null, headers, 0, startReadRowAt);
     }
 
     /**
@@ -43,8 +42,8 @@ public class ExcelUtils {
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Map<Integer,String> headers) throws Exception {
-        return read(in, targetType, null, headers, 0, 1, 0);
+    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Map<String,String> headers) throws Exception {
+        return read(in, targetType, null, headers, 0, 1);
     }
 
     /**
@@ -53,14 +52,13 @@ public class ExcelUtils {
      * @param in excel输入流
      * @param targetType 读取实体对象
      * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
-     * @param headers 工作表表头索引映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
      * @param startReadRowAt 读取表开始行索引
-     * @param startReadColAt 读取表开始列索引
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Integer,String> headers,int startReadRowAt, int startReadColAt) throws Exception {
-        return read(in, targetType,sheetNames, headers, 0, startReadRowAt, startReadColAt);
+    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int startReadRowAt) throws Exception {
+        return read(in, targetType,sheetNames, headers, 0, startReadRowAt);
     }
 
     /**
@@ -69,8 +67,8 @@ public class ExcelUtils {
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Integer,String> headers) throws Exception {
-        return read(in, targetType, sheetNames, headers, 0, 1, 0);
+    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers) throws Exception {
+        return read(in, targetType, sheetNames, headers, 0, 1);
     }
 
     /**
@@ -78,16 +76,15 @@ public class ExcelUtils {
      * @param in excel输入流
      * @param targetType 读取实体对象
      * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
-     * @param headers 工作表表头索引映射，为空则会按照默认规则自动生成
-     * @param headerAt 工作表表头所在行索引，headers为空时使用
+     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headerAt 工作表表头所在行索引
      * @param startReadRowAt 读取表开始行索引
-     * @param startReadColAt 读取表开始列索引
      * 2024/1/4 01:16
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Integer,String> headers,int headerAt,int startReadRowAt, int startReadColAt)throws Exception{
+    public static <T> Map<String,Collection<T>> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int headerAt,int startReadRowAt)throws Exception{
         Workbook workbook = getWorkBook(in);
-        return readWorkbook(workbook,targetType,sheetNames,headers,headerAt,startReadRowAt,startReadColAt);
+        return readWorkbook(workbook,targetType,sheetNames,headers,headerAt,startReadRowAt);
     }
 
 
@@ -96,20 +93,18 @@ public class ExcelUtils {
      * 2024/1/4 23:41
      * @author pengshuaifeng
      */
-    private static  <T> Map<String,Collection<T>> readWorkbook(Workbook workbook,Class<T> targetType,Collection<String> sheetNames,Map<Integer,String> headers,int headerAt,int startReadRowAt, int startReadColAt){
+    private static  <T> Map<String,Collection<T>> readWorkbook(Workbook workbook,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int headerAt,int startReadRowAt){
         try {
             //读取结果集
             Map<String,Collection<T>> results=new HashMap<>();
             if(sheetNames==null){ //遍历读取所有工作表
                 for (Sheet sheet : workbook) {
-                    headers=getHeaders(headers,sheet,headerAt,targetType); //定义表头
-                    results.put(sheet.getSheetName(),readSheet(sheet,headers,targetType,startReadRowAt,startReadColAt));//读取工作表
+                    results.put(sheet.getSheetName(),readSheet(sheet,headers,headerAt,targetType,startReadRowAt));//读取工作表
                 }
             }else{   //读取指定工作表
                 for (String sheetName : sheetNames) {
                     Sheet sheet = workbook.getSheet(sheetName);
-                    headers=getHeaders(headers,sheet,headerAt,targetType);//定义表头
-                    results.put(sheet.getSheetName(),readSheet(sheet,headers,targetType,startReadRowAt,startReadColAt));//读取工作表
+                    results.put(sheet.getSheetName(),readSheet(sheet,headers,headerAt,targetType,startReadRowAt));//读取工作表
                 }
             }
             return results;
@@ -123,13 +118,16 @@ public class ExcelUtils {
      * 2024/1/4 23:41
      * @author pengshuaifeng
      */
-    private static  <T> Collection<T> readSheet(Sheet sheet,Map<Integer,String> headers,Class<T> targetType, int startReadRowAt, int startReadColAt){
+    private static  <T> Collection<T> readSheet(Sheet sheet,Map<String,String> headers,int headerAt,Class<T> targetType, int startReadRowAt){
         try {
             Collection<T> results = new LinkedList<>();
+            //生成表头映射
+            Map<Integer,Field> headersTemp;
+            headersTemp=generateHeaderMappings(sheet,headerAt,targetType,headers);
             for (Row row : sheet) {
                 if (row.getRowNum()<startReadRowAt) //从startReadRow索引行开始读取
                     continue;
-                results.add(readRow(row,headers,targetType,startReadColAt));
+                results.add(readRow(row,headersTemp,targetType));
             }
             return results;
         } catch (Exception e) {
@@ -142,16 +140,12 @@ public class ExcelUtils {
      * 2024/1/4 23:40
      * @author pengshuaifeng
      */
-    private static  <T> T readRow(Row row, Map<Integer,String> headers, Class<T> targetType, int startReadColAt){
+    private static  <T> T readRow(Row row, Map<Integer,Field> headers, Class<T> targetType){
         try {
             T t = targetType.newInstance();
-            for (Cell cell : row) {
-                int columnIndex = cell.getColumnIndex();
-                if (columnIndex <startReadColAt) //从startReadCol索引列开始读取
-                    continue;
-                Field field = targetType.getDeclaredField(headers.get(columnIndex));
-                field.setAccessible(true);
-                field.set(t,readCell(cell,field.getType()));  //读取单元格数据
+            for (Map.Entry<Integer, Field> header : headers.entrySet()) {
+                Field field = header.getValue();
+                field.set(t,readCell(row.getCell(header.getKey()),field.getType()));  //读取单元格数据
             }
             return t;
         } catch (Exception e) {
@@ -352,23 +346,32 @@ public class ExcelUtils {
      */
     public static byte[] writeToBytes(Workbook workbook,Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers,
                                       int headerAt,int startWriteRowAt,int startWriteColAt,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel)throws Exception{
-        contents.forEach((key, value)->{
+        for (Map.Entry<String, Collection<?>> content : contents.entrySet()) {
+            String key = content.getKey();
+            Collection<?> value = content.getValue();
+            Class<?> targetType = value.stream().findFirst().get().getClass();
             Sheet sheet = workbook.getSheet(key);
             if(sheet==null){
                 sheet= workbook.createSheet(key);
             }
-            Map<String,String> headerMap;
+            Map<String,String> headerToStrings;
             if (headers==null|| headers.get(key)==null) { //没有自定义表头，则创建默认表头
                 try {
-                    headerMap=generateHeaders(value.stream().findFirst().get().getClass(),null,null);
+                    headerToStrings=generateHeaders(targetType,null,null);
                 } catch (Exception e) {
                     throw new RuntimeException("生成表头异常",e);
                 }
             }else{
-                headerMap=headers.get(key); //使用自定义表头
+                headerToStrings=headers.get(key); //使用自定义表头
             }
-            writeSheet(sheet,value,headerMap,headerAt,startWriteRowAt,startWriteColAt,headerStyle,contentStyle,cellRangeAddressModel);
-        });
+            Map<String,Field> headerToFields=new HashMap<>();
+            for (Map.Entry<String, String> headerField : headerToStrings.entrySet()) {
+                Field declaredField = targetType.getDeclaredField(headerField.getValue());
+                declaredField.setAccessible(true);
+                headerToFields.put(headerField.getKey(),declaredField);
+            }
+            writeSheet(sheet,value,headerToFields,headerAt,startWriteRowAt,startWriteColAt,headerStyle,contentStyle,cellRangeAddressModel);
+        }
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         workbook.write(byteArrayOutputStream);
         return byteArrayOutputStream.toByteArray();
@@ -381,7 +384,7 @@ public class ExcelUtils {
      * 2024/1/7 00:16
      * @author pengshuaifeng
      */
-    private static void writeSheet(Sheet sheet,Collection<?> rows,Map<String,String> headers, int headerAt,int startWriteRowAt,int startWriteColAt,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel){
+    private static void writeSheet(Sheet sheet,Collection<?> rows,Map<String,Field> headers, int headerAt,int startWriteRowAt,int startWriteColAt,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel){
         try {
             if(headerAt!=-1){  //表头数据写入
                 Row headerRows = sheet.createRow(headerAt);
@@ -406,7 +409,7 @@ public class ExcelUtils {
      * 2024/1/7 00:16
      * @author pengshuaifeng
      */
-    private static void writeRow(Row row,Object rowData,Collection<String> headers,int startWriteColAt,CellStyle cellStyle){
+    private static void writeRow(Row row,Object rowData,Collection<Field> headers,int startWriteColAt,CellStyle cellStyle){
         try {
             if(rowData instanceof Collection){ //如果是数据集合，则按照数据集合顺序依次写入集合元素
                 Collection<?> data = (Collection<?>) rowData;
@@ -416,11 +419,10 @@ public class ExcelUtils {
                     writeCell(cell,iterator.next(),cellStyle);
                 }
             }else{  //按照表头字段映射，依次获取数据对象的字段属性写入元素
-                Iterator<String> iterator = headers.iterator();
+                Iterator<Field> iterator = headers.iterator();
                 for (int i = 0; i < headers.size(); i++) {
                     Cell cell = row.createCell(i + startWriteColAt);
-                    Field field = rowData.getClass().getDeclaredField(iterator.next());
-                    field.setAccessible(true);
+                    Field field = iterator.next();
                     writeCell(cell,field.get(rowData),cellStyle);
                 }
             }
@@ -486,50 +488,38 @@ public class ExcelUtils {
     }
 
 
-    /**
-     * 获取表头
-     * @param headers 表头对象，为空则自动生成表头
-     * 2024/1/4 22:42
-     * @author pengshuaifeng
-     */
-    private static Map<Integer,String> getHeaders(Map<Integer,String> headers,Sheet sheet,int index,Class<?> source){
-        if (headers==null || headers.isEmpty()) {
-            headers=generateHeaders(sheet,index,source);
-        }
-        return headers;
-    }
 
     /**
-     * 生成表头
+     * 生成表头映射
      * @param sheet 工作表
      * @param index 表头所在的行
-     * @param source 表头映射源
+     * @param source 表头映射源:自动映射
+     * @param headerSource 表头映射源：自定义映射（优先）
      * 2024/1/4 21:37
      * @author pengshuaifeng
      */
-    private static Map<Integer,String> generateHeaders(Sheet sheet,int index,Class<?> source){
-        Map<Integer, String> headers = new HashMap<>();
+    private static Map<Integer,Field> generateHeaderMappings(Sheet sheet,int index,Class<?> source,Map<String,String> headerSource) throws NoSuchFieldException {
+        Map<Integer, Field> headerMappings = new HashMap<>();
         Row row = sheet.getRow(index);
-        //TODO 默认只支持指定表头行为属性名的，后续可根据属性的注解获取符合表头标识符的进行映射
-        for (Cell cell : row) {
-            int columnIndex = cell.getColumnIndex();
-            String header = cell.getStringCellValue();
-            headers.put(columnIndex,header);
+        if(headerSource!=null){
+            for (Cell cell : row) {
+                int columnIndex = cell.getColumnIndex();
+                String header = cell.getStringCellValue();
+                Field declaredField = source.getDeclaredField(headerSource.get(header));
+                declaredField.setAccessible(true);
+                headerMappings.put(columnIndex, declaredField);
+            }
+        }else{
+            //TODO 默认只支持指定表头行为属性名的，后续可根据属性的注解获取符合表头标识符的进行映射
+            for (Cell cell : row) {
+                int columnIndex = cell.getColumnIndex();
+                String header = cell.getStringCellValue();
+                Field declaredField = source.getDeclaredField(header);
+                declaredField.setAccessible(true);
+                headerMappings.put(columnIndex,declaredField);
+            }
         }
-        return headers;
-    }
-
-    /**
-     * 获取表头
-     * @param headers 表头对象，为空则自动生成表头
-     * 2024/1/4 22:42
-     * @author pengshuaifeng
-     */
-    public static Map<String,String> getHeaders(Class<?> source,Map<String,String> headers,Set<String> selectedFields,Set<String> ignoreFields) throws Exception{
-        if (headers!=null) {
-            return headers;
-        }
-        return generateHeaders(source,selectedFields,ignoreFields);
+        return headerMappings;
     }
 
 
