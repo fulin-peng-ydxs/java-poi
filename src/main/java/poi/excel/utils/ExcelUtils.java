@@ -519,12 +519,16 @@ public class ExcelUtils {
             }
         }else{
             //TODO 默认只支持指定表头行为属性名的，后续可根据属性的注解获取符合表头标识符的进行映射
-            for (Cell cell : row) {
-                int columnIndex = cell.getColumnIndex();
-                String header = cell.getStringCellValue();
-                Field declaredField = source.getDeclaredField(header);
-                declaredField.setAccessible(true);
-                headerMappings.put(columnIndex,declaredField);
+            for (Field declaredField : source.getDeclaredFields()) {
+                for (Cell cell : row) {
+                    int columnIndex = cell.getColumnIndex();
+                    String header = cell.getStringCellValue();
+                    if (declaredField.getName().equals(header)) {
+                        declaredField.setAccessible(true);
+                        headerMappings.put(columnIndex,declaredField);
+                        break;
+                    }
+                }
             }
         }
         return headerMappings;
