@@ -543,7 +543,7 @@ public class ExcelUtils {
      * 2024/1/6 19:12
      * @author pengshuaifeng
      */
-    public static Map<String,String> generateHeaders(Class<?> source,Set<String> selectedFields,Set<String> ignoreFields) throws Exception{
+    public static Map<String,String> generateHeaders(Class<?> source,Collection<String> selectedFields,Collection<String> ignoreFields) throws Exception{
         Map<String, String> headers = new HashMap<>();
         if(selectedFields!=null){
             for (String fieldName : selectedFields) {
