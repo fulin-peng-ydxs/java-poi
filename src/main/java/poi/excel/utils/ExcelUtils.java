@@ -233,7 +233,27 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     public static byte[] writeToBytes(Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers, ExcelType excelType,Collection<CellRangeAddress> cellRangeAddress) throws Exception{
-        return writeToBytes(null, contents, headers, 0, 1, 0, excelType, cellRangeAddress);
+        return writeToBytes( contents, headers, 0, 1, 0, excelType, cellRangeAddress);
+    }
+
+    /**
+     * 导出表格
+     * <p>使用默认样式</p>
+     * @param contents 导出数据集，key为工作表名，value为数据集
+     * @param headers 导出表头映射集，为空自动生成默认表头，key为工作表名，value为表头名和字段集映射集
+     * @param headerAt 导出表头行索引，为-1不生成表头
+     * @param startWriteRowAt 导出起始行索引
+     * @param startWriteColAt 导出起始列索引
+     * @param excelType excel类型，为空excelType必
+     * @param cellRangeAddress 合并单元格集
+     * 2024/1/7 11:06
+     * @return excel字节数组
+     * @author pengshuaifeng
+     */
+    public static byte[] writeToBytes(Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers,
+                                      int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,Collection<CellRangeAddress> cellRangeAddress) throws Exception{
+        return writeToBytes(null, contents, headers,headerAt,startWriteRowAt, startWriteColAt, excelType,null, null,
+                cellRangeAddress==null?null:new ExcelCellRangeAddressModel(cellRangeAddress,null));
     }
 
 
