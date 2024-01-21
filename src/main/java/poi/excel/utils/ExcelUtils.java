@@ -564,7 +564,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     public static Map<String,String> generateHeaders(Class<?> source,Collection<String> selectedFields,Collection<String> ignoreFields) throws Exception{
-        Map<String, String> headers = new HashMap<>();
+        Map<String, String> headers = new LinkedHashMap<>();
         if(selectedFields!=null){
             for (String fieldName : selectedFields) {
                 Field field = source.getDeclaredField(fieldName);
