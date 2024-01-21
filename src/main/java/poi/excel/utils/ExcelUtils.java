@@ -104,7 +104,7 @@ public class ExcelUtils {
     private static  <T> Map<String,Collection<T>> readWorkbook(Workbook workbook,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int headerAt,int startReadRowAt){
         try {
             //读取结果集
-            Map<String,Collection<T>> results=new HashMap<>();
+            Map<String,Collection<T>> results=new LinkedHashMap<>();
             if(sheetNames==null){ //遍历读取所有工作表
                 for (Sheet sheet : workbook) {
                     results.put(sheet.getSheetName(),readSheet(sheet,headers,headerAt,targetType,startReadRowAt));//读取工作表
@@ -392,7 +392,7 @@ public class ExcelUtils {
             }else{
                 headerToStrings=headers.get(key); //使用自定义表头
             }
-            Map<String,Field> headerToFields=new HashMap<>();
+            Map<String,Field> headerToFields=new LinkedHashMap<>();
             for (Map.Entry<String, String> headerField : headerToStrings.entrySet()) {
                 Field declaredField = targetType.getDeclaredField(headerField.getValue());
                 declaredField.setAccessible(true);
@@ -527,7 +527,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static Map<Integer,Field> generateHeaderMappings(Sheet sheet,int index,Class<?> source,Map<String,String> headerSource) throws NoSuchFieldException {
-        Map<Integer, Field> headerMappings = new HashMap<>();
+        Map<Integer, Field> headerMappings = new LinkedHashMap<>();
         Row row = sheet.getRow(index);
         if(headerSource!=null){
             for (Cell cell : row) {
