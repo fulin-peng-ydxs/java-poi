@@ -3,6 +3,7 @@ package poi.excel.utils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
@@ -27,7 +28,7 @@ public class ExcelUtils {
      * <p>表头默认为第一行</p>
      * @param in excel输入流
      * @param targetType 读取实体对象
-     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射（key：表头字段，value：T对象字段名）为空则会按照默认规则自动生成：generateHeaderMappings()
      * @param startReadRowAt 读取表开始行索引
      * 2024/1/4 22:23
      * @author pengshuaifeng
@@ -41,7 +42,7 @@ public class ExcelUtils {
      * <p>表头默认为第一行,从第二行第一列开始读取</p>
      * @param in excel输入流
      * @param targetType 读取实体对象
-     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射（key：表头字段，value：T对象字段名）为空则会按照默认规则自动生成：generateHeaderMappings()
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
@@ -55,7 +56,7 @@ public class ExcelUtils {
      * @param in excel输入流
      * @param targetType 读取实体对象
      * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
-     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射（key：表头字段，value：T对象字段名）为空则会按照默认规则自动生成：generateHeaderMappings()
      * @param startReadRowAt 读取表开始行索引
      * 2024/1/4 22:23
      * @author pengshuaifeng
@@ -70,7 +71,7 @@ public class ExcelUtils {
      * @param in excel输入流
      * @param targetType 读取实体对象
      * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
-     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射（key：表头字段，value：T对象字段名）为空则会按照默认规则自动生成：generateHeaderMappings()
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
@@ -84,7 +85,7 @@ public class ExcelUtils {
      * @param in excel输入流
      * @param targetType 读取实体对象
      * @param sheetNames 读取的工作表名称集合，为null，则会读取所有的表
-     * @param headers 工作表表头关联映射，为空则会按照默认规则自动生成
+     * @param headers 工作表表头关联映射（key：表头字段，value：T对象字段名）为空则会按照默认规则自动生成：generateHeaderMappings()
      * @param headerAt 工作表表头所在行索引
      * @param startReadRowAt 读取表开始行索引
      * 2024/1/4 01:16
@@ -735,6 +736,23 @@ public class ExcelUtils {
             }
             sheet.addMergedRegion(cellRangeAddress);
         }
+    }
+
+    /**
+     * 获取结果集：默认方式
+     * 2024/8/26 下午6:00
+     * @author fulin-peng
+     */
+    public static <T> Collection<T> getDefaultMapSheet(Map<String,Collection<T>> map){
+        if (map==null)
+            return null;
+        return map.get("Sheet1");
+    }
+
+    public static <T> Collection<T> getDefaultMapSheetAt(Map<String,Collection<T>> map,int at){
+        if (map==null)
+            return null;
+        return map.get("Sheet"+at);
     }
 
     /**
