@@ -1,9 +1,9 @@
 package poi.excel.utils;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
@@ -22,6 +22,8 @@ import java.util.*;
  * 2024/1/4
  */
 public class ExcelUtils {
+
+
 
     /**
      * 读取excel
@@ -118,7 +120,7 @@ public class ExcelUtils {
             }
             return results;
         } catch (Exception e) {
-           throw new RuntimeException("读取工作簿异常",e);
+            throw new RuntimeException("读取工作簿异常",e);
         }
     }
 
@@ -295,7 +297,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     public static byte[] writeToBytes(InputStream model,Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers,
-                             int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,Collection<CellRangeAddress> cellRangeAddress) throws Exception{
+                                      int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,Collection<CellRangeAddress> cellRangeAddress) throws Exception{
         return writeToBytes(model, contents, headers,headerAt,startWriteRowAt, startWriteColAt, excelType,null, null,
                 cellRangeAddress==null?null:new ExcelCellRangeAddressModel(cellRangeAddress,null));
     }
@@ -318,7 +320,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     public static void write(OutputStream out,InputStream model,Map<String,Collection<?>> contents,Map<String,Map<String,String>>headers,
-                             int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel) throws Exception{
+                             int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,ExcelCellStyleModel headerStyle,ExcelCellStyleModel contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel) throws Exception{
         out.write(writeToBytes(model, contents, headers,headerAt,startWriteRowAt, startWriteColAt, excelType, headerStyle, contentStyle, cellRangeAddressModel));
         out.close();
     }
@@ -340,19 +342,18 @@ public class ExcelUtils {
      * @return excel字节数组
      * @author pengshuaifeng
      */
-    //TODO 后续可加入自定义样式配置对象，暂只使用默认的通用样式
     public static byte[] writeToBytes(InputStream model,Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers,
-                                      int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel)throws Exception{
+                                      int headerAt,int startWriteRowAt,int startWriteColAt,ExcelType excelType,ExcelCellStyleModel headerStyle,ExcelCellStyleModel contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel)throws Exception{
         Workbook workbook;
         if(model!=null){
+            //关闭样式
+            ExcelCellStyleModel excelCellStyleModel = new ExcelCellStyleModel();
+            excelCellStyleModel.enable=false;
+            headerStyle=excelCellStyleModel;
+            contentStyle=excelCellStyleModel;
             workbook=getWorkBook(model);  //使用模型工作簿
         }else{
             workbook=generateWorkBook(excelType); //使用新建的工作簿
-        }
-        headerStyle = getHeaderCellStyle(headerStyle, workbook);
-        contentStyle = getContentStyle(contentStyle, workbook);
-        if (cellRangeAddressModel!=null) {
-            cellRangeAddressModel.setCellStyle(headerStyle);
         }
         return writeToBytes(workbook,contents,headers,headerAt,startWriteRowAt,startWriteColAt, headerStyle, contentStyle,cellRangeAddressModel);
     }
@@ -368,13 +369,13 @@ public class ExcelUtils {
      * @param startWriteColAt 导出起始列索引
      * @param headerStyle 导出表头样式
      * @param contentStyle 导出内容样式
-     * @param cellRangeAddressModel 单元格合并模型
+     * @param cellRangeAddressModel 单元格合并模型,默认使用表头样式充当合并样式
      * 2024/1/4 01:17
      * @return excel字节数组
      * @author pengshuaifeng
      */
     public static byte[] writeToBytes(Workbook workbook,Map<String,Collection<?>> contents,Map<String,Map<String,String>> headers,
-                                      int headerAt,int startWriteRowAt,int startWriteColAt,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel)throws Exception{
+                                      int headerAt,int startWriteRowAt,int startWriteColAt,ExcelCellStyleModel headerStyle,ExcelCellStyleModel contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel)throws Exception{
         for (Map.Entry<String, Collection<?>> content : contents.entrySet()) {
             String key = content.getKey();
             Collection<?> value = content.getValue();
@@ -413,16 +414,38 @@ public class ExcelUtils {
      * 2024/1/7 00:16
      * @author pengshuaifeng
      */
-    private static void writeSheet(Sheet sheet,Collection<?> rows,Map<String,Field> headers, int headerAt,int startWriteRowAt,int startWriteColAt,CellStyle headerStyle,CellStyle contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel){
+    private static void writeSheet(Sheet sheet,Collection<?> rows,Map<String,Field> headers, int headerAt,int startWriteRowAt,int startWriteColAt,
+                                   ExcelCellStyleModel headerStyle,ExcelCellStyleModel contentStyle,ExcelCellRangeAddressModel cellRangeAddressModel){
         try {
+            headerStyle=getHeaderStyle(headerStyle);
+            contentStyle=getContentStyle(contentStyle);
+            CellStyle headerCellStyle = generateCellStyle(headerStyle, sheet.getWorkbook());
+            CellStyle contentCellStyle = generateCellStyle(contentStyle, sheet.getWorkbook());
+            if (cellRangeAddressModel!=null &&cellRangeAddressModel.cellStyleModel==null) {
+                cellRangeAddressModel.setCellStyle(headerCellStyle);
+            }
+            if(headerStyle.enable){
+                //TODO 后续可以更精细设置列宽：例如根据字段哪些自动列宽、哪些固定列宽
+                if(headerStyle.columnWidth==null){
+                    //设置自动列宽
+                    for (int i = 0; i < headers.size(); i++) {
+                        sheet.autoSizeColumn(i);
+                    }
+                }else{
+                    //设置固定列宽
+                    for (int i = 0; i < headers.size(); i++) {
+                        sheet.setColumnWidth(i,headerStyle.columnWidth);
+                    }
+                }
+            }
             if(headerAt!=-1){  //表头数据写入
                 Row headerRows = sheet.createRow(headerAt);
-                writeRow(headerRows,headers.keySet(),null,startWriteColAt,headerStyle);
+                writeRow(headerRows,headers.keySet(),null,startWriteColAt,headerCellStyle);
             }
             //内容数据写入
             Iterator<?> iterator = rows.iterator();
             for (int i = 0; i < rows.size(); i++) {
-                writeRow(sheet.createRow(i+startWriteRowAt),iterator.next(),headers.values(),startWriteColAt,contentStyle);
+                writeRow(sheet.createRow(i+startWriteRowAt),iterator.next(),headers.values(),startWriteColAt,contentCellStyle);
             }
             //合并单元格
             if(cellRangeAddressModel!=null){
@@ -484,7 +507,8 @@ public class ExcelUtils {
             } else {
                 cell.setCellValue(data.toString());
             }
-            cell.setCellStyle(cellStyle);
+            if(cellStyle!=null)
+                cell.setCellStyle(cellStyle);
         } catch (Exception e) {
             throw new RuntimeException("写入单元格异常",e);
         }
@@ -539,12 +563,16 @@ public class ExcelUtils {
                 headerMappings.put(columnIndex, declaredField);
             }
         }else{
-            //TODO 默认只支持指定表头行为属性名的，后续可根据属性的注解获取符合表头标识符的进行映射
             for (Field declaredField : source.getDeclaredFields()) {
                 for (Cell cell : row) {
                     int columnIndex = cell.getColumnIndex();
                     String header = cell.getStringCellValue();
-                    if (declaredField.getName().equals(header)) {
+                    ApiModelProperty apiModelProperty = declaredField.getAnnotation(ApiModelProperty.class);
+                    if (apiModelProperty!=null && apiModelProperty.value().equals(header)) {
+                        declaredField.setAccessible(true);
+                        headerMappings.put(columnIndex, declaredField);
+                        break;
+                    }else if (declaredField.getName().equals(header)) {
                         declaredField.setAccessible(true);
                         headerMappings.put(columnIndex,declaredField);
                         break;
@@ -588,62 +616,52 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static void setHeaders(Class<?> source,Field field,Map<String,String> headers){
-        //TODO 可根据实际情况自主定义获取字段中文的注解，一般建议使用swagger相关
-        String name = field.getName();
-        headers.put(name,name);
-    }
-
-
-    /**
-     * 获取表头样式
-     * 2024/1/6 21:01
-     * @author pengshuaifeng
-     */
-    private static CellStyle getHeaderCellStyle(CellStyle cellStyle,Workbook workbook){
-        if(cellStyle==null){
-            cellStyle=generateHeaderCellStyle(workbook);
+        String fieldName = field.getName();
+        String headName = fieldName;
+        ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
+        if(apiModelProperty!=null){
+            headName=apiModelProperty.value();
         }
-        return cellStyle;
+        headers.put(headName,fieldName);
     }
 
 
     /**
-     * 生成表头样式
+     * 获取表头样式模型
      * 2024/1/6 21:01
      * @author pengshuaifeng
      */
-    private static CellStyle generateHeaderCellStyle(Workbook workbook){
+    private static ExcelCellStyleModel getHeaderStyle(ExcelCellStyleModel cellStyle){
+        return cellStyle==null?ExcelCellStyleModel.DEFAULT_HEADER_STYLE:cellStyle;
+    }
+
+    /**
+     * 获取数据行模型
+     * 2024/1/6 21:01
+     * @author pengshuaifeng
+     */
+    private static ExcelCellStyleModel getContentStyle(ExcelCellStyleModel cellStyle){
+        return cellStyle==null?ExcelCellStyleModel.DEFAULT_CONTENT_STYLE:cellStyle;
+    }
+
+    /**
+     * 生成样式
+     * 2024/8/30 22:34
+     * @author pengshuaifeng
+     */
+    private static CellStyle generateCellStyle(ExcelCellStyleModel cellStyleModel,Workbook workbook){
+        if(!cellStyleModel.enable)
+            return null;
         CellStyle cellStyle = workbook.createCellStyle();
-        setAlign(cellStyle, HorizontalAlignment.CENTER, VerticalAlignment.CENTER);
-        setBorder(cellStyle, BorderStyle.THIN, IndexedColors.BLACK);
-        setBackgroundFill(cellStyle, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND);
-        setFont(cellStyle,workbook.createFont(),null,null,true,null);
+        setAlign(cellStyle, cellStyleModel.getHorizontalAlignment(), cellStyleModel.getVerticalAlignment()); //设置对齐
+        setBorder(cellStyle, cellStyleModel.getBorderStyle(), cellStyleModel.getBorderColor()); //设置边框
+        setBackgroundFill(cellStyle, cellStyleModel.getBackgroundColor(), cellStyleModel.getFillPatternType()); //设置背景填充
+        setFont(cellStyle, workbook.createFont(), cellStyleModel.fontCellModel.getFontName(),
+                cellStyleModel.fontCellModel.getFontColor(), cellStyleModel.fontCellModel.getBold(), cellStyleModel.fontCellModel.getHeightInPoints()); //设置字体
+        cellStyle.setWrapText(true); //自动换行
         return cellStyle;
     }
 
-    /**
-     * 获取数据行样式
-     * 2024/1/6 21:01
-     * @author pengshuaifeng
-     */
-    private static CellStyle getContentStyle(CellStyle cellStyle,Workbook workbook){
-        if(cellStyle==null){
-            cellStyle=generateContentStyle(workbook);
-        }
-        return cellStyle;
-    }
-
-    /**
-     * 生成数据行样式
-     * 2024/1/6 21:01
-     * @author pengshuaifeng
-     */
-    private static CellStyle generateContentStyle(Workbook workbook){
-        CellStyle cellStyle = workbook.createCellStyle();
-        setAlign(cellStyle, HorizontalAlignment.CENTER, VerticalAlignment.CENTER);
-        setBorder(cellStyle, BorderStyle.THIN, IndexedColors.BLACK);
-        return cellStyle;
-    }
 
     /**
      * 设置对齐
@@ -654,8 +672,10 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static void setAlign(CellStyle cellStyle, HorizontalAlignment horizontal, VerticalAlignment vertical) {
-        cellStyle.setAlignment(horizontal);
-        cellStyle.setVerticalAlignment(vertical);
+        if (horizontal!=null)
+            cellStyle.setAlignment(horizontal);
+        if (vertical!=null)
+            cellStyle.setVerticalAlignment(vertical);
     }
 
     /**
@@ -667,14 +687,18 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static void setBorder(CellStyle cellStyle, BorderStyle borderStyle, IndexedColors indexedColors) {
-        cellStyle.setBorderBottom(borderStyle);
-        cellStyle.setBottomBorderColor(indexedColors.index);
-        cellStyle.setBorderLeft(borderStyle);
-        cellStyle.setLeftBorderColor(indexedColors.index);
-        cellStyle.setBorderRight(borderStyle);
-        cellStyle.setRightBorderColor(indexedColors.index);
-        cellStyle.setBorderTop(borderStyle);
-        cellStyle.setTopBorderColor(indexedColors.index);
+        if (borderStyle!=null){
+            cellStyle.setBorderBottom(borderStyle);
+            cellStyle.setBorderLeft(borderStyle);
+            cellStyle.setBorderRight(borderStyle);
+            cellStyle.setBorderTop(borderStyle);
+        }
+        if (indexedColors!=null){
+            cellStyle.setBottomBorderColor(indexedColors.index);
+            cellStyle.setLeftBorderColor(indexedColors.index);
+            cellStyle.setRightBorderColor(indexedColors.index);
+            cellStyle.setTopBorderColor(indexedColors.index);
+        }
     }
 
     /**
@@ -686,8 +710,10 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static void setBackgroundFill(CellStyle cellStyle,IndexedColors indexedColors, FillPatternType fillPattern) {
-        cellStyle.setFillForegroundColor(indexedColors.index);
-        cellStyle.setFillPattern(fillPattern);
+        if (indexedColors!=null)
+            cellStyle.setFillForegroundColor(indexedColors.index);
+        if (fillPattern!=null)
+            cellStyle.setFillPattern(fillPattern);
     }
 
     /**
@@ -701,8 +727,7 @@ public class ExcelUtils {
      * 2024/1/7 09:59
      * @author pengshuaifeng
      */
-    private static void setFont(CellStyle cellStyle,Font font,String fontName,
-                                     IndexedColors indexedColors,Boolean bold,Short heightInPoints){
+    private static void setFont(CellStyle cellStyle,Font font,String fontName, IndexedColors indexedColors,Boolean bold,Short heightInPoints){
         if (bold!=null)
             font.setBold(bold);
         if(fontName!=null)
@@ -720,6 +745,8 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     private static void handleMergedRegion(Sheet sheet,ExcelCellRangeAddressModel cellRangeAddressModel){
+        CellStyle cellStyle =cellRangeAddressModel.cellStyle!=null?
+                cellRangeAddressModel.cellStyle: cellRangeAddressModel.cellStyleModel != null ? generateCellStyle(cellRangeAddressModel.getCellStyleModel(), sheet.getWorkbook()) : null;
         for (CellRangeAddress cellRangeAddress : cellRangeAddressModel.getCellRangeAddress()) {
             int firstRow = cellRangeAddress.getFirstRow();
             int firstColumn = cellRangeAddress.getFirstColumn();
@@ -731,7 +758,7 @@ public class ExcelUtils {
                 for (int c=firstColumn; c<=lastColumn; c++){
                     Cell cell = row.getCell(c);
                     cell=cell==null?row.createCell(c):cell;
-                    cell.setCellStyle(cellRangeAddressModel.getCellStyle());
+                    cell.setCellStyle(cellStyle);
                 }
             }
             sheet.addMergedRegion(cellRangeAddress);
@@ -769,15 +796,114 @@ public class ExcelUtils {
      */
     @Data
     @AllArgsConstructor
-    private static class ExcelCellRangeAddressModel {
+    public static class ExcelCellRangeAddressModel {
+        public ExcelCellRangeAddressModel(Collection<CellRangeAddress> cellRangeAddress, ExcelCellStyleModel cellStyleModel) {
+            this.cellRangeAddress = cellRangeAddress;
+            this.cellStyleModel = cellStyleModel;
+        }
         //合并单元格集合
         private Collection<CellRangeAddress> cellRangeAddress;
+        //合并单元格样式模型
+        private ExcelCellStyleModel cellStyleModel;
         //合并单元格样式
         private CellStyle cellStyle;
     }
 
-    //TODO 待后续实现相关样式可自定义配置，需改造相关样式配置的方法
     /**
      * excel单元格样式模型
      */
+    @Data
+    public static class  ExcelCellStyleModel{
+        /**
+         * 适用于自定义配置样式下，统一配置，不用每次都传入
+         */
+        public static final   ExcelCellStyleModel DEFAULT_HEADER_STYLE = defaultHeaderCellStyle();
+
+        public static final ExcelCellStyleModel DEFAULT_CONTENT_STYLE = defaultContentCellStyle();
+
+        //是否开启
+        private boolean enable=true;
+
+        //1.字体
+        private FontCellModel fontCellModel;
+        //2.背景
+        //填充
+        private FillPatternType fillPatternType;
+        //颜色
+        private IndexedColors backgroundColor;
+        //3.边框
+        //边框样式
+        private BorderStyle borderStyle;
+        //边框颜色
+        private IndexedColors borderColor;
+        //4.对齐
+        //水平对齐
+        private HorizontalAlignment horizontalAlignment;
+        //垂直对齐
+        private VerticalAlignment verticalAlignment;
+        //5.列宽度 单位：字符-1/256个字符宽度
+        private Integer columnWidth;
+        //自动换行
+        private Boolean wrapText=true;
+        @Data
+        public static class  FontCellModel{
+            //字体名称
+            private String fontName;
+            //字体颜色
+            private IndexedColors fontColor;
+            //字体大小
+            private Short heightInPoints;
+            //字体加粗
+            private Boolean bold;
+        }
+    }
+
+
+    /**
+     * 默认表头样式
+     * 2024/8/30 22:24
+     * @author pengshuaifeng
+     */
+    public static ExcelCellStyleModel defaultHeaderCellStyle(){
+        ExcelCellStyleModel excelCellStyleModel = new ExcelCellStyleModel();
+        //字体样式
+        ExcelCellStyleModel.FontCellModel fontCellModel = new ExcelCellStyleModel.FontCellModel();
+        fontCellModel.setBold(true);
+        fontCellModel.setFontName("宋体");
+        excelCellStyleModel.setFontCellModel(fontCellModel);
+        //背景样式
+        excelCellStyleModel.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
+        excelCellStyleModel.setBackgroundColor(IndexedColors.GREY_25_PERCENT);
+        //边框样式
+        excelCellStyleModel.setBorderStyle(BorderStyle.THIN);
+        excelCellStyleModel.setBorderColor(IndexedColors.BLACK);
+        //对齐样式
+        excelCellStyleModel.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        excelCellStyleModel.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        excelCellStyleModel.setWrapText(true);
+        return excelCellStyleModel;
+    }
+
+    /**
+     * 默认内容样式
+     * 2024/8/30 22:23
+     * @author pengshuaifeng
+     */
+    public static ExcelCellStyleModel defaultContentCellStyle(){
+        ExcelCellStyleModel excelCellStyleModel = new ExcelCellStyleModel();
+        //字体样式
+        ExcelCellStyleModel.FontCellModel fontCellModel = new ExcelCellStyleModel.FontCellModel();
+        fontCellModel.setFontName("宋体");
+        excelCellStyleModel.setFontCellModel(fontCellModel);
+        //边框样式
+        excelCellStyleModel.setBorderStyle(BorderStyle.THIN);
+        excelCellStyleModel.setBorderColor(IndexedColors.BLACK);
+        //对齐样式
+        excelCellStyleModel.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        excelCellStyleModel.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        excelCellStyleModel.setWrapText(true);
+        return excelCellStyleModel;
+    }
 }
