@@ -7,6 +7,8 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
+import poi.excel.annotaion.Dict;
+import poi.excel.utils.basic.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -618,9 +620,14 @@ public class ExcelUtils {
     private static void setHeaders(Class<?> source,Field field,Map<String,String> headers){
         String fieldName = field.getName();
         String headName = fieldName;
-        ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
-        if(apiModelProperty!=null){
-            headName=apiModelProperty.value();
+        Dict annotation = field.getAnnotation(Dict.class);
+        if(annotation!=null && StringUtils.isNotEmpty(annotation.nameCn())){
+            headName= annotation.nameCn();
+        }else{
+            ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
+            if(apiModelProperty!=null){
+                headName=apiModelProperty.value();
+            }
         }
         headers.put(headName,fieldName);
     }
