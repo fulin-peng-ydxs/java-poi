@@ -882,6 +882,8 @@ public class ExcelUtils {
         excelCellStyleModel.setVerticalAlignment(VerticalAlignment.CENTER);
         //自动换行
         excelCellStyleModel.setWrapText(true);
+        //列宽度
+        excelCellStyleModel.setColumnWidth(4000);
         return excelCellStyleModel;
     }
 
