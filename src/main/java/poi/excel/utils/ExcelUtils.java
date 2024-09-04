@@ -417,7 +417,6 @@ public class ExcelUtils {
                 Map<String,Field> headerToFields=new LinkedHashMap<>();
                 for (Map.Entry<String, String> headerField : headerToStrings.entrySet()) {
                     Field declaredField = ClassUtils.getField(targetType,headerField.getValue());
-                    declaredField.setAccessible(true);
                     headerToFields.put(headerField.getKey(),declaredField);
                 }
                 writeSheet(sheet,value,headerToFields,headerAt,startWriteRowAt,startWriteColAt,headerStyle,contentStyle,cellRangeAddressModel);
