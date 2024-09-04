@@ -20,8 +20,8 @@ public class ExcelUtilsTest {
     @Test
     public void testRead(){
         try {
-            Map<String, Collection<User>> users = ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_quick.xls"),
-                    User.class, null);
+            Collection<User> users =ExcelUtils.getDefaultResultCollection(  ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_quick.xls"),
+                    User.class, null));
             System.out.println(users);
             System.out.println("-------------------------");
             Map<String, String> headers = new HashMap<>();
@@ -29,7 +29,8 @@ public class ExcelUtilsTest {
             headers.put("地址","address");
             headers.put("年龄","age");
             System.out.println(users);
-            users = ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_read.xls"), User.class, headers);
+            users = ExcelUtils.getDefaultResultCollection(
+                    ExcelUtils.read(ExcelUtilsTest.class.getResourceAsStream("/write_read.xls"), User.class, headers));
             System.out.println(users);
         } catch (Exception e) {
             e.printStackTrace();
