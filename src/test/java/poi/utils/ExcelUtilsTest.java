@@ -82,4 +82,23 @@ public class ExcelUtilsTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void  testWriteModelReplace(){
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("user1","傻逼1");
+            data.put("age1","年龄1");
+            data.put("sex1","性别1");
+            data.put("user2","傻逼2");
+            data.put("age2","年龄2");
+            data.put("sex2","性别2");
+            ExcelUtils.write(Files.newOutputStream(Paths.get("E:\\java-poi\\src\\test\\demo.xls")),
+                    ExcelUtils.class.getResourceAsStream("/excel/write_model_replace.xls"),
+                    Collections.singletonMap("用户信息列表",data),null,1000,0,0,
+                    ExcelUtils.ExcelType.XLS,null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
