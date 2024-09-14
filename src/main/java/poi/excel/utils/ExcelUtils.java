@@ -518,7 +518,7 @@ public class ExcelUtils {
                 for (int i = 0; i < headers.size(); i++) {
                     Cell cell = row.createCell(i + startWriteColAt);
                     Field field = iterator.next();
-                    writeCell(cell,field.get(rowData),cellStyle);
+                    writeCell(cell,ClassUtils.getFieldValue(field,rowData),cellStyle);
                 }
             }
         } catch (Exception e) {
