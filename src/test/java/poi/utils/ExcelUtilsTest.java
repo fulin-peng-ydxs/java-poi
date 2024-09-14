@@ -24,7 +24,7 @@ public class ExcelUtilsTest {
                     User.class, null));
             System.out.println(users);
             System.out.println("-------------------------");
-            Map<String, String> headers = new HashMap<>();
+            Map<Object, String> headers = new HashMap<>();
             headers.put("用户名","name");
             headers.put("地址","address");
             headers.put("年龄","age");

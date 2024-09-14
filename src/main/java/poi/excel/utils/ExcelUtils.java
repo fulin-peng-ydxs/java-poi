@@ -40,7 +40,7 @@ public class ExcelUtils {
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Object> read(InputStream in, Class<T> targetType, Map<String,String> headers, int startReadRowAt)  {
+    public static <T> Map<String,Object> read(InputStream in, Class<T> targetType, Map<Object,String> headers, int startReadRowAt)  {
         return read(in, targetType, null, headers, 0, startReadRowAt);
     }
 
@@ -53,7 +53,7 @@ public class ExcelUtils {
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Map<String,String> headers)  {
+    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Map<Object,String> headers)  {
         return read(in, targetType, null, headers, 0, 1);
     }
 
@@ -68,7 +68,7 @@ public class ExcelUtils {
      * 2024/1/4 22:23
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int startReadRowAt) {
+    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Object,String> headers,int startReadRowAt) {
         return read(in, targetType,sheetNames, headers, 0, startReadRowAt);
     }
 
@@ -83,7 +83,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     //TODO 表头映射应该和sheet一一绑定而不是共享表头，每个sheet应该支持可以绑定不同类型的实体对象
-    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers)  {
+    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Object,String> headers)  {
         return read(in, targetType, sheetNames, headers, 0, 1);
     }
 
@@ -98,7 +98,7 @@ public class ExcelUtils {
      * 2024/1/4 01:16
      * @author pengshuaifeng
      */
-    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int headerAt,int startReadRowAt){
+    public static <T> Map<String,Object> read(InputStream in,Class<T> targetType,Collection<String> sheetNames,Map<Object,String> headers,int headerAt,int startReadRowAt){
         Workbook workbook = getWorkBook(in);
         return readWorkbook(workbook,targetType,sheetNames,headers,headerAt,startReadRowAt);
     }
@@ -109,7 +109,7 @@ public class ExcelUtils {
      * 2024/1/4 23:41
      * @author pengshuaifeng
      */
-    private static <T>  Map<String,Object> readWorkbook(Workbook workbook,Class<T> targetType,Collection<String> sheetNames,Map<String,String> headers,int headerAt,int startReadRowAt){
+    private static <T>  Map<String,Object> readWorkbook(Workbook workbook,Class<T> targetType,Collection<String> sheetNames,Map<Object,String> headers,int headerAt,int startReadRowAt){
         try {
             //读取结果集
             Map<String,Object> results=new LinkedHashMap<>();
@@ -129,7 +129,7 @@ public class ExcelUtils {
         }
     }
 
-    private static <T> void  readWorkbookWExecute(Sheet sheet, Class<T> targetType, Map<String,String> headers, int headerAt, int startReadRowAt,
+    private static <T> void  readWorkbookWExecute(Sheet sheet, Class<T> targetType, Map<Object,String> headers, int headerAt, int startReadRowAt,
                                                   Map<String,Object> results){
         Map<Integer, Field> headerMappings = generateHeaderMappings(sheet, headerAt, targetType, headers);
         results.put(sheet.getSheetName(),readSheet(sheet,headerMappings,targetType,startReadRowAt));//读取工作表
@@ -200,8 +200,9 @@ public class ExcelUtils {
                     if (targetType.isAssignableFrom(int.class) || targetType.isAssignableFrom(Integer.class) ) {
                         //int类型处理
                         return  (int)numericCellValue;
-                    }else{
-                        //其他类型处理
+                    }else if(targetType.isAssignableFrom(String.class)){
+                        return (numericCellValue % 1 == 0) ? String.format("%.0f", numericCellValue) : String.valueOf(numericCellValue);
+                    }else{ //默认：double
                         return numericCellValue;
                     }
                 }
@@ -616,12 +617,18 @@ public class ExcelUtils {
      * 2024/1/4 21:37
      * @author pengshuaifeng
      */
-    private static Map<Integer,Field> generateHeaderMappings(Sheet sheet,int index,Class<?> source,Map<String,String> headerSource)  {
+    private static Map<Integer,Field> generateHeaderMappings(Sheet sheet,int index,Class<?> source,Map<Object,String> headerSource)  {
         Map<Integer, Field> headerMappings = new LinkedHashMap<>();
         Row row = sheet.getRow(index);
         if(CollectionUtils.isNotEmpty(headerSource)){
             for (Cell cell : row) {
+                //如果能直接通过列索引可找到表头映射，则优先使用此策略
                 int columnIndex = cell.getColumnIndex();
+                String fieldName = headerSource.get(columnIndex);
+                if(fieldName!=null){
+                    headerMappings.put(columnIndex, ClassUtils.getField(source,fieldName));
+                    continue;
+                }
                 String header = cell.getStringCellValue();
                 Field declaredField = ClassUtils.getField(source,headerSource.get(header));
                 //处理字典类型，优先根据Dict注解中文匹配，同时如果有标注对应的nameEn，则会将此列的值赋予nameEn所关联的字段
