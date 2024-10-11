@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * excel工具类
@@ -454,16 +455,19 @@ public class ExcelUtils {
                 cellRangeAddressModel.setCellStyle(headerCellStyle);
             }
             if(headerStyle.enable){
-                //TODO 后续可以更精细设置列宽：例如根据字段哪些自动列宽、哪些固定列宽
-                if(headerStyle.columnWidth==null){
+                if(headerStyle.columnWidth==null && headerStyle.getColumnWidths()==null){
                     //设置自动列宽
                     for (int i = 0; i < headers.size(); i++) {
                         sheet.autoSizeColumn(i);
                     }
                 }else{
+                    List<Field> fields = new ArrayList<>(headers.values());
+                    Map<?, ?> columnFields = headerStyle.getColumnWidths() != null ? headerStyle.getColumnWidths() : Collections.emptyMap();
                     //设置固定列宽
                     for (int i = 0; i < headers.size(); i++) {
-                        sheet.setColumnWidth(i,headerStyle.columnWidth);
+                        String fieldName = fields.get(i).getName();
+                        Integer columnWidth = columnFields.get(fieldName) != null ? (Integer) columnFields.get(fieldName) : headerStyle.columnWidth;
+                        sheet.setColumnWidth(i,columnWidth);
                     }
                 }
             }
@@ -947,6 +951,7 @@ public class ExcelUtils {
         private VerticalAlignment verticalAlignment;
         //5.列宽度 单位：字符-1/256个字符宽度
         private Integer columnWidth;
+        private Map<String,Integer> columnWidths;
         //自动换行
         private Boolean wrapText=true;
         @Data
