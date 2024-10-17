@@ -1,5 +1,6 @@
 package poi.excel.utils;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 import poi.excel.annotaion.Dict;
 import poi.excel.utils.basic.ClassUtils;
 import poi.excel.utils.basic.CollectionUtils;
+import poi.excel.utils.basic.DateUtils;
 import poi.excel.utils.basic.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,7 +21,6 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * excel工具类
@@ -463,11 +464,12 @@ public class ExcelUtils {
                 }else{
                     List<Field> fields = new ArrayList<>(headers.values());
                     Map<?, ?> columnFields = headerStyle.getColumnWidths() != null ? headerStyle.getColumnWidths() : Collections.emptyMap();
-                    //设置固定列宽
                     for (int i = 0; i < headers.size(); i++) {
                         String fieldName = fields.get(i).getName();
                         Integer columnWidth = columnFields.get(fieldName) != null ? (Integer) columnFields.get(fieldName) : headerStyle.columnWidth;
-                        sheet.setColumnWidth(i,columnWidth);
+                        if(columnWidth!=null)
+                            sheet.setColumnWidth(i,columnWidth); //设置固定列宽
+                        else  sheet.autoSizeColumn(i); //设置自动列宽
                     }
                 }
             }
@@ -515,14 +517,14 @@ public class ExcelUtils {
                 Iterator<?> iterator = data.iterator();
                 for (int i = 0; i < data.size(); i++) {
                     Cell cell = row.createCell(i + startWriteColAt);
-                    writeCell(cell,iterator.next(),cellStyle);
+                    writeCell(cell,iterator.next(),null,cellStyle);
                 }
             }else{  //按照表头字段映射，依次获取数据对象的字段属性写入元素
                 Iterator<Field> iterator = headers.iterator();
                 for (int i = 0; i < headers.size(); i++) {
                     Cell cell = row.createCell(i + startWriteColAt);
                     Field field = iterator.next();
-                    writeCell(cell,ClassUtils.getFieldValue(field,rowData),cellStyle);
+                    writeCell(cell,ClassUtils.getFieldValue(field,rowData),field,cellStyle);
                 }
             }
         } catch (Exception e) {
@@ -547,7 +549,7 @@ public class ExcelUtils {
             Object cellValue = readCell(cell, String.class);
             Object value = data.get(cellValue == null ? null : cellValue.toString());
             if(value!=null){
-                writeCell(cell,value,cellStyle);
+                writeCell(cell,value,null,cellStyle);
             }
         }
     }
@@ -559,7 +561,7 @@ public class ExcelUtils {
      * @author pengshuaifeng
      */
     //TODO 存在数据类型格式的样式设置问题：例如时间类型
-    private static void writeCell(Cell cell,Object data,CellStyle cellStyle){
+    private static void writeCell(Cell cell,Object data,Field dataField,CellStyle cellStyle){
         try {
             if(data ==null){
                 cell.setCellValue("");
@@ -567,7 +569,12 @@ public class ExcelUtils {
             else if(data instanceof Number){
                 cell.setCellValue(data instanceof Float ? Double.parseDouble(data.toString()) : ((Number)data).doubleValue());
             }else if(data instanceof Date){
-                cell.setCellValue((Date)data);
+                String format=DateUtils.defaultFormat;
+                if(dataField!=null && ClassUtils.hasAnnotation(dataField,JsonFormat.class)){
+                    JsonFormat jsonFormat = ClassUtils.getAnnotation(dataField, JsonFormat.class);
+                    format=jsonFormat.pattern();
+                }
+                cell.setCellValue(DateUtils.format((Date) data,format));
             }else if(data instanceof LocalDate){
                 cell.setCellValue((LocalDate)data);
             }else if(data instanceof LocalDateTime){

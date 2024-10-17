@@ -4,7 +4,6 @@ package poi.utils;
 import org.junit.Test;
 import poi.excel.entity.User;
 import poi.excel.utils.ExcelUtils;
-import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -40,8 +39,10 @@ public class ExcelUtilsTest {
 //    @Test
     public void  testWriteCustom(){
         try {
-            List<User> users = Arrays.asList(new User("test1", "test1-1", 1),
-                    new User("test2", "test2-1", 12), new User("test3", "test3-11111111111111111111111111", 99));
+            Date date = new Date();
+            List<User> users = Arrays.asList(new User("test1", "test1-1", 1,date),
+                    new User("test2", "test2-1", 12,date),
+                    new User("test3", "test3-11111111111111111111111111", 99,date));
             Map<String, String> headers = new LinkedHashMap<>();
             headers.put("姓名","name");
             headers.put("年龄","age");
@@ -56,11 +57,13 @@ public class ExcelUtilsTest {
     @Test
     public void  testWriteSwagger(){
         try {
-            List<User> users = Arrays.asList(new User("test1", "test1-1", 1),
-                    new User("test2", "test2-1", 12), new User("test3", "test3-11111111111111111111111111", 99));
+            Date date = new Date();
+            List<User> users = Arrays.asList(new User("test1", "test1-1", 1,date),
+                    new User("test2", "test2-1", 12,date),
+                    new User("test3", "test3-11111111111111111111111111", 99,date));
             ExcelUtils.ExcelCellStyleModel.DEFAULT_HEADER_STYLE.setColumnWidth(4000);
-            ExcelUtils.write(Files.newOutputStream(Paths.get("/Users/pengshuaifeng/write.xlsx")),Collections.singletonMap("sheet-test",users),
-                    Collections.singletonMap("sheet-test",ExcelUtils.generateHeaders(User.class,Arrays.asList("name","address","age"),null)), ExcelUtils.ExcelType.XLSX,null);
+            ExcelUtils.write(Files.newOutputStream(Paths.get("F:\\write.xlsx")),Collections.singletonMap("sheet-test",users),
+                    Collections.singletonMap("sheet-test",ExcelUtils.generateHeaders(User.class,Arrays.asList("name","address","age","registerTime"),null)), ExcelUtils.ExcelType.XLSX,null);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,8 +72,9 @@ public class ExcelUtilsTest {
 //    @Test
     public void  testWriteModel(){
         try {
-            List<User> users = Arrays.asList(new User("test1", "test1-1", 1),
-                    new User("test2", "test2-1", 12), new User("test3", "test3-1", 99));
+            Date date = new Date();
+            List<User> users = Arrays.asList(new User("test1", "test1-1", 1,date),
+                    new User("test2", "test2-1", 12,date), new User("test3", "test3-1", 99,date));
             Map<String, String> headers = new LinkedHashMap<>();
             headers.put("姓名","name");
             headers.put("地址","address");

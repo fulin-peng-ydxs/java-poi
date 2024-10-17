@@ -11,6 +11,7 @@ import poi.excel.entity.User;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedList;
 
 /**
@@ -24,12 +25,13 @@ public class ExcelWriteQuick {
 
     public static void main(String[] args){
         try {
+            Date date = new Date();
             //创建xls工作簿对象
             HSSFWorkbook wb = new HSSFWorkbook();
             //创建一个sheet
             Sheet s = wb.createSheet("用户信息列表");
-            LinkedList<User> users = new LinkedList<>(Arrays.asList(new User("用户1", "用户地址-1", 1),
-                    new User("用户2", "用户地址-2", 12), new User("用户3", "用户地址-3", 99)));
+            LinkedList<User> users = new LinkedList<>(Arrays.asList(new User("用户1", "用户地址-1", 1,date),
+                    new User("用户2", "用户地址-2", 12,date), new User("用户3", "用户地址-3", 99,date)));
             //创建第一行
             Row row = s.createRow(0);
             Cell userNameHead = row.createCell(0);

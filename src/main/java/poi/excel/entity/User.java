@@ -1,10 +1,11 @@
 package poi.excel.entity;
 
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
  * user
@@ -22,5 +23,6 @@ public class User {
     private String address;
     @ApiModelProperty("年龄")
     private int age;
-
+    @ApiModelProperty("登记时间")
+    private Date registerTime;
 }

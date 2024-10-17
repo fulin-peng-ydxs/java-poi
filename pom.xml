@@ -15,6 +15,7 @@
         <logback.version>1.1.11</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j-2-slf4j.version>2.17.0</log4j-2-slf4j.version>
+        <jackson-version>2.13.3</jackson-version>
     </properties>
 
     <dependencies>
@@ -79,6 +80,14 @@
             <groupId>io.springfox</groupId>
             <artifactId>springfox-boot-starter</artifactId>
             <version>3.0.0</version>
+<!--            <scope>provided</scope>-->
+        </dependency>
+
+        <!--json支持-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson-version}</version>
 <!--            <scope>provided</scope>-->
         </dependency>
 
