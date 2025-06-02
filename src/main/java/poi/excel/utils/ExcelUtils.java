@@ -516,15 +516,27 @@ public class ExcelUtils {
                 Collection<?> data = (Collection<?>) rowData;
                 Iterator<?> iterator = data.iterator();
                 for (int i = 0; i < data.size(); i++) {
-                    Cell cell = row.createCell(i + startWriteColAt);
-                    writeCell(cell,iterator.next(),null,cellStyle);
+                    Object value = iterator.next();
+                    int startWriteIndex = i + startWriteColAt;
+                    if(value instanceof ExcelImageModel){
+                        writeImage(row.getSheet(),(ExcelImageModel)value,row.getRowNum(), startWriteIndex,row.getRowNum()+1,i+startWriteColAt+1);
+                        continue;
+                    }
+                    Cell cell = row.createCell(startWriteIndex);
+                    writeCell(cell, value,null,cellStyle);
                 }
             }else{  //按照表头字段映射，依次获取数据对象的字段属性写入元素
                 Iterator<Field> iterator = headers.iterator();
                 for (int i = 0; i < headers.size(); i++) {
-                    Cell cell = row.createCell(i + startWriteColAt);
+                    int startWriteColIndex = i + startWriteColAt;
                     Field field = iterator.next();
-                    writeCell(cell,ClassUtils.getFieldValue(field,rowData),field,cellStyle);
+                    Object fieldValue = ClassUtils.getFieldValue(field, rowData);
+                    if(fieldValue instanceof ExcelImageModel){
+                        writeImage(row.getSheet(),(ExcelImageModel)fieldValue,row.getRowNum(),startWriteColIndex,row.getRowNum()+1,startWriteColIndex+1);
+                        continue;
+                    }
+                    Cell cell = row.createCell(startWriteColIndex);
+                    writeCell(cell, fieldValue,field,cellStyle);
                 }
             }
         } catch (Exception e) {
@@ -565,6 +577,8 @@ public class ExcelUtils {
         try {
             if(data ==null){
                 cell.setCellValue("");
+            }else if (data instanceof ExcelImageModel){  //附件等文件格式单独处理
+                return;
             }
             else if(data instanceof Number){
                 cell.setCellValue(data instanceof Float ? Double.parseDouble(data.toString()) : ((Number)data).doubleValue());
@@ -895,6 +909,33 @@ public class ExcelUtils {
             return null;
         return (Collection<T>) result.get(sheetName);
     }
+    
+    /**
+     * 写入l图片
+     * 2025/5/16 00:04
+     * @author pengshuaifeng
+     * @param sheet 工作表
+     * @param imageModel 图片模型
+     * @param rowAt 图片起始行索引
+     * @param colAt 图片起始列索引
+     * @param rowAt2 图片结束行索引
+     * @param colAt2 图片结束行索引
+     */
+    public static void writeImage(Sheet sheet,ExcelImageModel imageModel,int rowAt,int colAt,int rowAt2,int colAt2){
+        try {
+            int pictureIdx = sheet.getWorkbook().addPicture(imageModel.getImageData(), imageModel.getImageType());
+            CreationHelper helper = sheet.getWorkbook().getCreationHelper();
+            Drawing<?> drawing = sheet.createDrawingPatriarch();
+            ClientAnchor anchor = helper.createClientAnchor();
+            anchor.setCol1(colAt);
+            anchor.setRow1(rowAt);
+            anchor.setCol2(colAt2);
+            anchor.setRow2(rowAt2);
+            drawing.createPicture(anchor, pictureIdx);
+        } catch (Exception e) {
+            throw new RuntimeException("写入图片异常",e);
+        }
+    }
 
 
     /**
@@ -903,6 +944,18 @@ public class ExcelUtils {
     public enum ExcelType{
         XLS,
         XLSX
+    }
+
+    /**
+     * excel 图片
+     */
+    @Data
+    @AllArgsConstructor
+    public static class ExcelImageModel{
+        //图片类型：Workbook.PICTURE_TYPE_PNG..
+        private int imageType;
+        //图片数据
+        private byte[] imageData;
     }
 
 
